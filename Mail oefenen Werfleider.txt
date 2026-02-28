@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="nl-BE">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Werf Inbox - Bouwproject X</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body {
+            background-color: #fcfcfc; 
+            color: #1c1917;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .mail-item {
+            border-left: 3px solid transparent;
+            transition: all 0.15s ease;
+        }
+        .mail-item.active {
+            border-left-color: #f97316;
+            background-color: #fff;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+        }
+        .mail-item.unread {
+            background-color: #f8fafc;
+        }
+        .fade-in {
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        
+        .email-body {
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+        
+        .app-height {
+            height: calc(100vh - 56px);
+        }
+        
+        .reply-shadow {
+            box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <!-- Top Navigation -->
+    <header class="bg-white border-b border-stone-200 h-14 flex items-center px-6 relative z-30">
+        <div class="flex-grow flex items-center gap-3">
+            <div class="w-7 h-7 bg-stone-900 text-orange-500 rounded flex items-center justify-center font-black text-sm">X</div>
+            <h1 class="text-sm font-bold tracking-tight text-stone-800">Bouwproject X <span class="text-stone-400 font-normal mx-2">|</span> <span class="text-stone-500 font-medium">Werf Inbox</span></h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="ai-status" class="invisible flex items-center gap-2 text-[10px] font-bold text-orange-600 uppercase">
+                <span class="flex h-2 w-2 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                </span>
+                AI reageert...
+            </div>
+            <div class="text-[11px] font-semibold text-stone-400 uppercase tracking-wider bg-stone-50 px-3 py-1 rounded border border-stone-100">
+                28 FEB 2026
+            </div>
+        </div>
+    </header>
+
+    <main class="flex flex-grow app-height overflow-hidden bg-white">
+        
+        <!-- Mail Sidebar -->
+        <aside class="w-[320px] xl:w-[380px] border-r border-stone-200 bg-stone-50/50 flex flex-col">
+            <div class="p-4 border-b border-stone-200 bg-white/80 backdrop-blur flex justify-between items-center">
+                <span class="text-[11px] font-black text-stone-500 uppercase tracking-widest">Berichten</span>
+                <span id="unread-count" class="bg-stone-200 text-stone-600 text-[10px] font-bold px-2 py-0.5 rounded">0</span>
+            </div>
+            <div id="mail-list" class="flex-grow overflow-y-auto">
+                <!-- Dynamisch gevuld -->
+            </div>
+        </aside>
+
+        <!-- Mail Content -->
+        <section id="mail-detail" class="flex-grow flex flex-col bg-white overflow-hidden relative">
+            <div class="p-20 text-center text-stone-300 h-full flex flex-col justify-center items-center">
+                <svg class="w-12 h-12 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
+                <p class="text-sm font-medium">Selecteer een bericht om te lezen</p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const apiKey = ""; 
+
+        let messages = [
+            { id: 1, sender: "Dakwerken Peeters", email: "info@peeters-dak.be", subject: "Lek ontdekt Volume 2", date: "Vandaag, 14:22", body: "Beste werfleider,\n\nEr is een tijdelijke dichting losgekomen bij Volume 2 door de wind. Er is waterinfiltratie.\n\nKunnen we morgenochtend extra ploegen inzetten voor herstel?\n\nMet vriendelijke groeten,\n\nMarc Peeters", unread: true, thread: [] },
+            { id: 2, sender: "Holcim Beton", email: "planning@holcim.be", subject: "Vertraging levering Maandag", date: "Vandaag, 09:15", body: "Geachte,\n\nWegens een storing in Grimbergen zal de levering van maandag vertraagd zijn (11:30).\n\nIs dit akkoord voor jullie?\n\nMet vriendelijke groeten,\n\nDe Planning", unread: true, thread: [] },
+            { id: 3, sender: "Janssens Elektro", email: "p.janssens@elektro-j.be", subject: "Kabelgoten +2 gereed", date: "Gisteren, 16:45", body: "Beste,\n\nDe kabelgoten op verdieping +2 zijn volledig geplaatst volgens plan. U kunt de keuringsinstantie inlichten.\n\nMet vriendelijke groeten,\n\nPieter Janssens", unread: false, thread: [] }
+        ];
+
+        async function callGemini(prompt, senderName) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            // Geüpdatete system prompt voor B1/B2 niveau
+            const systemPrompt = `
+                Je bent ${senderName}, een onderaannemer op een bouwplaats. 
+                Reageer professioneel maar toegankelijk op de werfleider.
+                
+                RICHTLIJNEN VOOR TAALGEBRUIK (B1/B2 NIVEAU):
+                - Gebruik duidelijke, alledaagse woorden. 
+                - Vermijd ingewikkelde zinnen en vaktaal die niet algemeen bekend is.
+                - Wees direct en to-the-point.
+                - Gebruik een actieve vorm (niet "er zal worden gedaan", maar "ik doe dit").
+                - Hou het kort en zakelijk.
+                - Sluit af met een standaard groet.
+            `;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        contents: [{ parts: [{ text: prompt }] }], 
+                        systemInstruction: { parts: [{ text: systemPrompt }] } 
+                    })
+                });
+                const result = await response.json();
+                return result.candidates?.[0]?.content?.parts?.[0]?.text;
+            } catch (error) { 
+                return "Bedankt voor je bericht. Ik ga ermee aan de slag en laat je snel iets weten."; 
+            }
+        }
+
+        function renderMailList() {
+            const list = document.getElementById('mail-list');
+            const unreadDisplay = document.getElementById('unread-count');
+            let unreadCount = 0;
+            list.innerHTML = messages.map(m => {
+                if(m.unread) unreadCount++;
+                return `<div onclick="openMail(${m.id})" class="mail-item p-4 border-b border-stone-200 cursor-pointer hover:bg-white ${m.unread ? 'unread' : ''}" id="mail-item-${m.id}">
+                    <div class="flex justify-between items-center mb-0.5">
+                        <span class="text-[13px] text-stone-900 font-bold truncate">${m.sender}</span>
+                        <span class="text-[10px] text-stone-400 font-medium">${m.date.split(',')[1] || m.date}</span>
+                    </div>
+                    <div class="text-[12px] text-orange-600 font-semibold truncate mb-1">${m.subject}</div>
+                    <div class="text-[11px] text-stone-400 line-clamp-1">${m.body.substring(0, 50)}...</div>
+                </div>`;
+            }).join('');
+            unreadDisplay.innerText = unreadCount;
+        }
+
+        function openMail(id) {
+            const mail = messages.find(m => m.id === id);
+            mail.unread = false;
+            renderMailList();
+            
+            document.querySelectorAll('.mail-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`mail-item-${id}`)?.classList.add('active');
+
+            const threadHtml = mail.thread.map(t => `
+                <div class="mb-6 ${t.role === 'user' ? 'pl-8' : 'pr-8'} fade-in">
+                    <div class="text-[9px] font-bold text-stone-400 uppercase mb-2 flex items-center gap-2">
+                        <span>${t.role === 'user' ? 'WERFLEIDER (U)' : mail.sender.toUpperCase()}</span>
+                        <div class="h-px flex-grow bg-stone-100"></div>
+                    </div>
+                    <div class="${t.role === 'user' ? 'bg-orange-50 border-orange-100' : 'bg-stone-50 border-stone-200'} p-4 rounded-xl border text-[13px] email-body text-stone-800 shadow-sm">${t.text}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('mail-detail').innerHTML = `
+                <div class="flex flex-col h-full overflow-hidden">
+                    <!-- Compact Mail Header -->
+                    <div class="h-16 px-6 border-b border-stone-100 flex justify-between items-center bg-white shrink-0">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 bg-stone-100 text-stone-600 rounded flex items-center justify-center text-xs font-bold">${mail.sender[0]}</div>
+                            <div>
+                                <h3 class="text-sm font-bold text-stone-900">${mail.subject}</h3>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold text-stone-500">${mail.sender}</span>
+                                    <span class="text-[10px] text-stone-300 font-medium">${mail.email}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-[10px] font-bold text-stone-300 uppercase tracking-widest">${mail.date}</div>
+                    </div>
+                    
+                    <!-- Content Area -->
+                    <div id="thread-container" class="flex-grow overflow-y-auto p-6 scroll-smooth bg-white">
+                        <div class="mb-6 pr-8">
+                            <div class="text-[9px] font-bold text-stone-400 uppercase mb-2 flex items-center gap-2">
+                                <span>${mail.sender.toUpperCase()}</span>
+                                <div class="h-px flex-grow bg-stone-100"></div>
+                            </div>
+                            <div class="bg-stone-50 border border-stone-200 p-4 rounded-xl text-[13px] email-body text-stone-800 shadow-sm">${mail.body}</div>
+                        </div>
+                        ${threadHtml}
+                    </div>
+
+                    <!-- Optimized Reply Area -->
+                    <div class="p-6 border-t border-stone-100 bg-white reply-shadow">
+                        <div class="relative max-w-5xl mx-auto">
+                            <textarea id="reply-text" 
+                                class="w-full h-40 p-5 pr-32 border border-stone-200 rounded-2xl text-[13px] focus:border-orange-500 focus:ring-4 focus:ring-orange-50 outline-none transition-all resize-none shadow-sm" 
+                                placeholder="Typ uw bericht aan ${mail.sender}..."></textarea>
+                            
+                            <div class="absolute bottom-3 right-3 flex items-center gap-3 bg-white/80 p-1 rounded-lg backdrop-blur">
+                                <button onclick="sendReply(${id})" 
+                                    class="bg-stone-900 text-white text-[11px] font-bold uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-orange-600 transition-all shadow-md flex items-center gap-2">
+                                    Verzenden
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            setTimeout(() => {
+                const c = document.getElementById('thread-container');
+                if (c) c.scrollTop = c.scrollHeight;
+            }, 50);
+        }
+
+        async function sendReply(id) {
+            const textarea = document.getElementById('reply-text');
+            const text = textarea.value.trim();
+            if(!text) return;
+
+            const mail = messages.find(m => m.id === id);
+            mail.thread.push({ role: 'user', text: text });
+            openMail(id);
+            
+            document.getElementById('ai-status').classList.remove('invisible');
+            
+            // AI oproepen met de context van het gesprek
+            const aiReply = await callGemini(`Werfleider zegt: ${text}. Reageer kort en duidelijk in B1/B2 Nederlands.`, mail.sender);
+            
+            setTimeout(() => {
+                mail.thread.push({ role: 'ai', text: aiReply });
+                document.getElementById('ai-status').classList.add('invisible');
+                openMail(id);
+            }, 800);
+        }
+
+        window.onload = renderMailList;
+    </script>
+</body>
+</html>
